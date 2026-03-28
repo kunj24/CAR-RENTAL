@@ -160,7 +160,7 @@ export const changeBookingStatus = async (req, res) => {
                 message: "Unauthorized"
             });
         }
- 
+
         booking.status = status.toLowerCase();
         await booking.save();
 
@@ -174,6 +174,67 @@ export const changeBookingStatus = async (req, res) => {
     catch(error) {
         console.log(error.message);
         res.json({success: false, message: error.message});
+    }
+
+}
+
+// API to Cancel Booking by User
+
+export const cancelBooking = async (req, res) => {
+
+    try{
+        const { _id } = req.user;
+        const { bookingId } = req.body;
+
+        if (!bookingId) {
+            return res.json({
+                success: false,
+                message: "Booking ID is required"
+            });
+        }
+
+        const booking = await Booking.findById(bookingId);
+
+        if (!booking) {
+            return res.json({
+                success: false,
+                message: "Booking not found"
+            });
+        }
+
+        // Check if the booking belongs to the user
+        if (booking.user.toString() !== _id.toString()) {
+            return res.json({
+                success: false,
+                message: "Unauthorized to cancel this booking"
+            });
+        }
+
+        // Check if booking is already cancelled
+        if (booking.status === 'cancelled') {
+            return res.json({
+                success: false,
+                message: "Booking is already cancelled"
+            });
+        }
+
+        // Update booking status to cancelled
+        booking.status = 'cancelled';
+        await booking.save();
+
+        res.json({
+            success: true,
+            message: "Booking cancelled successfully"
+        });
+
+    }
+
+    catch(error) {
+        console.log(error.message);
+        res.json({
+            success: false,
+            message: error.message
+        });
     }
 
 }
